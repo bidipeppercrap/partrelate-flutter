@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 import '../types/part.dart';
-import 'padbox.dart';
 
 class PartList extends StatelessWidget {
   const PartList({
@@ -18,17 +17,9 @@ class PartList extends StatelessWidget {
     return ListView.builder(
       physics: const NeverScrollableScrollPhysics(),
       shrinkWrap: true,
-      itemCount: parts.length + 2,
+      itemCount: parts.length,
       itemBuilder: (context, index) {
-        if (index == 0) {
-          return const PadBox(title: 'Start of Parts');
-        }
-
-        if (index == parts.length + 1) {
-          return const PadBox(title: 'End of Parts');
-        }
-
-        Part part = parts[index - 1];
+        Part part = parts[index];
 
         return ListTile(
           title: Text(part.name),

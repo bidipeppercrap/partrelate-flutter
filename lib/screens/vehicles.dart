@@ -8,6 +8,7 @@ import '../widgets/vehicle_list.dart';
 import '../widgets/pagination.dart';
 import 'create_vehicle.dart';
 import 'vehicle_detail.dart';
+import '../widgets/padbox.dart';
 import '../stores/vehicles.dart';
 
 class VehiclesScreen extends ConsumerStatefulWidget {
@@ -97,6 +98,8 @@ class _VehiclesScreenState extends ConsumerState<VehiclesScreen> {
                 return SingleChildScrollView(
                   child: Column(
                     children: [
+                      const PadBox(title: ''),
+                      const PadBox(title: 'Start of Vehicles'),
                       VehicleList(
                         vehicles: snapshot.data!.data,
                         onTapHandler: _vehicleDetail,
@@ -110,6 +113,7 @@ class _VehiclesScreenState extends ConsumerState<VehiclesScreen> {
                           handlePrev: handlePrev,
                         )
                       ),
+                      const PadBox(title: 'End of Vehicles'),
                     ],
                   )
                 );

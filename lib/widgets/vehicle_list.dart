@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 import '../types/vehicle.dart';
-import 'padbox.dart';
 
 class VehicleList extends StatelessWidget {
   const VehicleList({
@@ -18,17 +17,9 @@ class VehicleList extends StatelessWidget {
     return ListView.builder(
       physics: const NeverScrollableScrollPhysics(),
       shrinkWrap: true,
-      itemCount: vehicles.length + 2,
+      itemCount: vehicles.length,
       itemBuilder: (context, index) {
-        if (index == 0) {
-          return const PadBox(title: 'Start of Vehicles');
-        }
-
-        if (index == vehicles.length + 1) {
-          return const PadBox(title: 'End of Vehicles');
-        }
-
-        Vehicle vehicle = vehicles[index - 1];
+        Vehicle vehicle = vehicles[index];
         int vehicleId = vehicle.id!;
 
         return ListTile(

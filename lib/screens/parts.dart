@@ -9,6 +9,7 @@ import '../stores/parts.dart';
 import '../widgets/floating_search_bar.dart';
 import '../widgets/part_list.dart';
 import '../widgets/pagination.dart';
+import '../widgets/padbox.dart';
 import '../types/part.dart';
 
 class PartsScreen extends ConsumerStatefulWidget {
@@ -101,6 +102,8 @@ class _PartsScreenState extends ConsumerState<PartsScreen> {
               return SingleChildScrollView(
                 child: Column(
                   children: [
+                    const PadBox(title: ''),
+                    const PadBox(title: 'Start of Parts'),
                     PartList(parts: snapshot.data!.data, onTapHandler: _partDetail,),
                     Padding(
                         padding: const EdgeInsets.all(16),
@@ -111,6 +114,7 @@ class _PartsScreenState extends ConsumerState<PartsScreen> {
                           handlePrev: handlePrev,
                         )
                     ),
+                    const PadBox(title: 'End of Parts'),
                   ],
                 ),
               );
