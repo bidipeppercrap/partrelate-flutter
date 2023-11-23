@@ -13,6 +13,8 @@ import '../widgets/detail_action_buttons.dart';
 import '../types/vehicle_part.dart';
 import '../types/vehicle_detail.dart';
 
+typedef RefreshBuilder = void Function(BuildContext context, void Function() refreshSearchAgain);
+
 class VehicleDetailScreen extends ConsumerStatefulWidget {
   const VehicleDetailScreen({
     super.key,
@@ -26,40 +28,39 @@ class VehicleDetailScreen extends ConsumerStatefulWidget {
 }
 
 class _VehicleDetailScreenState extends ConsumerState<VehicleDetailScreen> {
-  late Future<VehicleDetail> _vehicleDetail;
+  late void Function() parentRefreshSearchAgain;
 
   @override
   void initState() {
     super.initState();
-
-    _vehicleDetail = _getVehicleDetail();
   }
 
-  Future<VehicleDetail> _getVehicleDetail() {
-    final vehiclesRepository = ref.read(vehiclesRepositoryProvider);
-
-    return vehiclesRepository.get(widget.vehicleId);
-  }
-
-  void _refreshVehicleDetail() {
+  void refreshVehicleDetail() async {
     if (!mounted) return;
-    setState(() {
-      _vehicleDetail = _getVehicleDetail();
-    });
+    setState(() {});
   }
 
   @override
   Widget build(BuildContext context) {
+    final vehiclesRepository = ref.read(vehiclesRepositoryProvider);
+    final vehicleFuture = vehiclesRepository.get(widget.vehicleId);
 
     return FutureBuilder(
-        future: _vehicleDetail,
+        future: vehicleFuture,
         builder: (context, snapshot) {
           if (snapshot.hasData) {
             final vehicle = snapshot.data!;
 
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              parentRefreshSearchAgain.call();
+            });
+
             return VehicleDetailScreenScaffold(
+              builder: (BuildContext context, void Function() refreshSearchAgain) {
+                parentRefreshSearchAgain = refreshSearchAgain;
+              },
               vehicleDetail: vehicle,
-              refreshState: _refreshVehicleDetail,
+              refreshState: refreshVehicleDetail,
             );
           } else if (snapshot.hasError) {
             return Scaffold(
@@ -90,9 +91,11 @@ class VehicleDetailScreenScaffold extends ConsumerStatefulWidget {
   const VehicleDetailScreenScaffold({
     super.key,
     required this.vehicleDetail,
-    required this.refreshState
+    required this.refreshState,
+    required this.builder
   });
 
+  final RefreshBuilder builder;
   final VehicleDetail vehicleDetail;
   final Function() refreshState;
 
@@ -102,6 +105,7 @@ class VehicleDetailScreenScaffold extends ConsumerStatefulWidget {
 
 class _VehicleDetailScreenScaffoldState extends ConsumerState<VehicleDetailScreenScaffold> {
   final partSearchController = TextEditingController();
+  String searchText = '';
   List<VehiclePart> filteredVehicleParts = [];
 
   @override
@@ -138,20 +142,20 @@ class _VehicleDetailScreenScaffoldState extends ConsumerState<VehicleDetailScree
     }
   }
 
-  void refreshVehicleParts() {
-    final keywords = partSearchController.text.trim().split(' ');
-    final vehicleParts = widget.vehicleDetail.vehicleParts ?? [];
-
-    Iterable<VehiclePart> whereQuery = vehicleParts;
-
-    for (final word in keywords) {
-      whereQuery = whereQuery.where((e) => e.name.toLowerCase().contains(word.toLowerCase()));
-    }
-
-    widget.refreshState.call();
-
+  void refreshVehicleParts() async {
     if (!mounted) return;
     setState(() {
+      searchText = partSearchController.text;
+
+      final keywords = searchText.trim().split(' ');
+      final vehicleParts = widget.vehicleDetail.vehicleParts ?? [];
+
+      Iterable<VehiclePart> whereQuery = vehicleParts;
+
+      for (final word in keywords) {
+        whereQuery = whereQuery.where((e) => e.name.toLowerCase().contains(word.toLowerCase()));
+      }
+
       filteredVehicleParts = whereQuery.toList();
     });
   }
@@ -182,6 +186,8 @@ class _VehicleDetailScreenScaffoldState extends ConsumerState<VehicleDetailScree
 
   @override
   Widget build(BuildContext context) {
+    widget.builder.call(context, refreshVehicleParts);
+
     ListTile generateSpacer(String title) {
       return ListTile(
         title: Text(
@@ -224,7 +230,7 @@ class _VehicleDetailScreenScaffoldState extends ConsumerState<VehicleDetailScree
                               Expanded(
                                   child: VehiclePartList(
                                     vehicleParts: filteredVehicleParts,
-                                    refreshState: () => refreshVehicleParts.call(),
+                                    refreshState: widget.refreshState,
                                   )
                               )
                             ],

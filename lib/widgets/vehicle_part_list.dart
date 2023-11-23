@@ -27,10 +27,10 @@ class VehiclePartList extends ConsumerWidget {
     return showDialog(
       context: context,
       builder: (BuildContext context) => AssignPartDialog(
-        onCreated: () => refreshState.call(),
+        onCreated: refreshState,
         vehiclePart: vehiclePart,
       )
-    ).then((_) => refreshState.call());
+    );
   }
 
   ListTile generateSpacer(String title) {
@@ -95,7 +95,10 @@ class VehiclePartList extends ConsumerWidget {
           children: [
             Padding(
               padding: const EdgeInsets.only(right: 16, left: 16),
-              child: VehiclePartDetailBody(description: vehiclePart.description, note: vehiclePart.note),
+              child: VehiclePartDetailBody(
+                  description: vehiclePart.description,
+                  note: vehiclePart.note
+              ),
             ),
             Padding(
               padding: const EdgeInsets.only(right: 16, left: 16),
@@ -106,7 +109,11 @@ class VehiclePartList extends ConsumerWidget {
             ),
             generateSpacer('Start'),
             const Divider(),
-            PartsToVehiclePartsBuilder(list: partsToVehicleParts, vehiclePart: vehiclePart),
+            PartsToVehiclePartsBuilder(
+              list: partsToVehicleParts,
+              vehiclePart: vehiclePart,
+              refreshState: refreshState,
+            ),
             const Divider(),
             generateSpacer('End'),
             Padding(
@@ -132,11 +139,13 @@ class PartsToVehiclePartsBuilder extends ConsumerWidget {
   const PartsToVehiclePartsBuilder({
     super.key,
     required this.list,
-    required this.vehiclePart
+    required this.vehiclePart,
+    required this.refreshState
   });
   
   final List<PartToVehiclePart> list;
   final VehiclePart vehiclePart;
+  final Function() refreshState;
   
   Widget descriptionBuilder(String description) {
     return Container(
@@ -269,17 +278,23 @@ class PartsToVehiclePartsBuilder extends ConsumerWidget {
         context: context,
         builder: (BuildContext context) => EditAssignedPartDialog(
           data: data,
-          onUpdated: () => {}, //widget.refreshState.call(),
+          onUpdated: () => refreshState.call(),
           vehiclePart: vehiclePart,
         )
-    );//.then((_) => refreshState.call());
+    );
   }
+
   
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     List<PopupMenuEntry<ListTileTitleAlignment>> popupMenuItems(PartToVehiclePart data) {
       final items = <PopupMenuEntry<ListTileTitleAlignment>>[];
       final repository = ref.read(partsToVehiclePartsRepositoryProvider);
+
+      Future<void> handleDelete(int id) async {
+        await repository.delete.call(id);
+        refreshState.call();
+      }
 
       if (data.part!.description != null && data.part!.description!.isNotEmpty) {
         items.add(
@@ -295,7 +310,7 @@ class PartsToVehiclePartsBuilder extends ConsumerWidget {
         child: const Text('Edit')
       ));
       items.add(PopupMenuItem(
-        onTap: () => repository.delete.call(data.id!),
+        onTap: () => handleDelete.call(data.id!),
         child: const Text('Delete')
       ));
 

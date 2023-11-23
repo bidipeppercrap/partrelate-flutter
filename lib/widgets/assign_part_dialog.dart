@@ -33,7 +33,7 @@ class _AssignPartDialogState extends ConsumerState<AssignPartDialog> {
     super.dispose();
   }
 
-  Future<void> handleSubmit(Part? part) async {
+  void handleSubmit(Part? part) {
     final repository = ref.read(partsToVehiclePartsRepositoryProvider);
 
     if (part == null) return;
